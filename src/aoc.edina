@@ -1,0 +1,7 @@
+# Common utils
+
+rt eq eq 1 3 lroll pop pop end
+rt neq neq 1 3 lroll pop pop end
+rt lt lt 1 3 lroll pop pop end
+rt lte lte 1 3 lroll pop pop end
+rt gte gte 1 3 lroll pop pop end
