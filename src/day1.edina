@@ -21,21 +21,16 @@ rt run
     # Run while there are items on the stack
     1 5 rroll                       # [Len1, Size, Lim, Max, Cur, Str1, Len2, Str2, ...]
     0 eq if
-      #"-" :std.println_out
-
       # Empty line
       # Check if Cur > Max and handle accordingly
       # [0, Len1, Size, Lim, Max, Cur, Len2, Str2, ...]
       pop pop 2 4 lroll lt          # [Max<Cur, Max, Cur, Size, Lim, Len2, Str2, ...]
       1 5 lroll                     # [Max, Cur, Size, Lim, Max<Cur, Len2, Str2, ...]
       swap 1 4 rroll gt             # [Lim>Cur, Lim, Cur, Max, Size, Max<Cur, Len2, Str2, ...]
-      #native_stack_debug
       1 6 rroll &                   # [Max<Cur&Lim>Cur, Lim, Cur, Max, Size, Len2, Str2, ...]
       1 5 lroll                     # [Lim, Cur, Max, Size, Max<Cur&Lim>Cur, Len2, Str2, ...]
       1 4 lroll swap                # [Max, Cur, Size, Lim, Max<Cur&Lim>Cur, Len2, Str2, ...]
       1 5 rroll                     # [Max<Cur&Lim>Cur, Max, Cur, Size, Lim, Len2, Str2, ...]
-
-      #native_stack_debug
 
       if
         # Max < Cur && Lim > Cur
@@ -49,9 +44,6 @@ rt run
       pop ssize                     # Swap old Size with current stack size
       3 swap -                      # [Size-3, Lim, Max, Cur, Len1, Str1, Len2, Str2, ...]
     else
-      #"/" :std.println_out
-      #native_stack_debug
-
       # Line not empty
       # Parse the line and add to Cur
       # [0, Len1, Size, Lim, Max, Cur, Str1, Len2, Str2, ...]
@@ -68,8 +60,7 @@ rt run
     end
   end
 
-  pop pop swap pop
-  # -> [67622]
+  pop pop swap pop                  # Remove useless items
   dup :ints.int_to_str :std.println_out
 end
 
