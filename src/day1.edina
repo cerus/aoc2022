@@ -4,49 +4,72 @@ import "stdlib/strings"
 import "aoc"
 import "input/input1"
 
-# [Len1, Str1, Len2, Str2, ...]
+:ints.int64_max  # Initial limit, we will take the output of .run as the next limit(s)
+.run
+.run
+.run
 
-:input1.input
+[ eddoc={
+    stack={ in="Limit $int" out="Highest entry $int" }
+    desc="Find the highest entry under the specified limit"
+} ]
+rt run
+  :input1.input                     # [Len1, Str1, Len2, Str2, ..., Lim]
+  0 0 3 ssize -                     # [Size-3, Max, Cur, Len1, Str1, Len2, Str2, ..., Lim]
+  ssize 1 swap rroll swap           # [Size-3, Lim, Max, Cur, Len1, Str1, Len2, Str2, ...]
+  while
+    # Run while there are items on the stack
+    1 5 rroll                       # [Len1, Size, Lim, Max, Cur, Str1, Len2, Str2, ...]
+    0 eq if
+      #"-" :std.println_out
 
-0 0 2 ssize -           # [Size-2, Max, Cur, Len1, Str1, Len2, Str2, ...]
-while
-  # Run while there are items on the stack
-  1 4 rroll             # [Len1, Size, Max, Cur, Str1, Len2, Str2, ...]
-  0 eq if
-    # Empty line
-    # Check if Cur > Max and handle accordingly
-    # [0, Len1, Size, Max, Cur, Len2, Str2, ...]
-    pop pop 1 3 lroll   # [Max, Cur, Size, Len2, Str2, ...]
+      # Empty line
+      # Check if Cur > Max and handle accordingly
+      # [0, Len1, Size, Lim, Max, Cur, Len2, Str2, ...]
+      pop pop 2 4 lroll lt          # [Max<Cur, Max, Cur, Size, Lim, Len2, Str2, ...]
+      1 5 lroll                     # [Max, Cur, Size, Lim, Max<Cur, Len2, Str2, ...]
+      swap 1 4 rroll gt             # [Lim>Cur, Lim, Cur, Max, Size, Max<Cur, Len2, Str2, ...]
+      #native_stack_debug
+      1 6 rroll &                   # [Max<Cur&Lim>Cur, Lim, Cur, Max, Size, Len2, Str2, ...]
+      1 5 lroll                     # [Lim, Cur, Max, Size, Max<Cur&Lim>Cur, Len2, Str2, ...]
+      1 4 lroll swap                # [Max, Cur, Size, Lim, Max<Cur&Lim>Cur, Len2, Str2, ...]
+      1 5 rroll                     # [Max<Cur&Lim>Cur, Max, Cur, Size, Lim, Len2, Str2, ...]
 
-    lt if
-      # Max < Cur
-      pop 0 swap        # [Cur->Max, Cur->0, Size, Len2, Str2, ...]
+      #native_stack_debug
+
+      if
+        # Max < Cur && Lim > Cur
+        pop 0 swap                  # [Cur->Max, Cur->0, Size, Lim, Len2, Str2, ...]
+      else
+        swap pop 0 swap
+      end
+
+      # Reset for next run
+      2 4 rroll                     # [Size, Lim, Max, Cur, Len2, Str2, ...]
+      pop ssize                     # Swap old Size with current stack size
+      3 swap -                      # [Size-3, Lim, Max, Cur, Len1, Str1, Len2, Str2, ...]
     else
-      swap pop 0 swap
+      #"/" :std.println_out
+      #native_stack_debug
+
+      # Line not empty
+      # Parse the line and add to Cur
+      # [0, Len1, Size, Lim, Max, Cur, Str1, Len2, Str2, ...]
+      pop dup                       # [Len1, Len1, Size, Lim, Max, Cur, Str1, Len2, Str2, ...]
+      1 6 lroll 5 +                 # [Len1+5, Size, Lim, Max, Cur, Len1, Str1, Len2, Str2, ...]
+      4 swap lroll                  # [Len1, Str1, Size, Lim, Max, Cur, Len2, Str2, ...]
+      10 :ints.parse_int            # [Num, Size, Lim, Max, Cur, Len2, Str2, ...]
+      1 5 rroll +                   # [Cur+Num, Size, Lim, Max, Len2, Str2, ...]
+
+      # Reset to [Size, Max, Cur, Len1, Str1, Len2, Str2, ...]
+      1 4 lroll                     # [Size, Max, Cur, Lim, Len1, Str1, Len2, Str2, ...]
+      pop ssize                     # Swap old Size with current stack size
+      3 swap -                      # [Size-3, Max, Cur, Len1, Str1, Len2, Str2, ...]
     end
-
-    # Reset for next run
-    1 3 rroll           # [Size, Max, Cur, Len2, Str2, ...]
-    pop ssize           # Swap old Size with current stack size
-    2 swap -            # [Size-2, Max, Cur, Len1, Str1, Len2, Str2, ...]
-  else
-    # Line not empty
-    # Parse the line and add to Cur
-    # [0, Len1, Size, Max, Cur, Str1, Len2, Str2, ...]
-    pop dup             # [Len1, Len1, Size, Max, Cur, Str1, Len2, Str2, ...]
-    1 5 lroll 4 +       # [Len1+4, Size, Max, Cur, Len1, Str1, Len2, Str2, ...]
-    3 swap lroll        # [Len1, Str1, Size, Max, Cur, Len2, Str2, ...]
-    10 :ints.parse_int  # [Num, Size, Max, Cur, Len2, Str2, ...]
-    1 4 rroll +         # [Cur+Num, Size, Max, Len2, Str2, ...]
-
-    # Reset to [Size, Max, Cur, Len1, Str1, Len2, Str2, ...]
-    1 3 lroll           # [Size, Max, Cur, Len1, Str1, Len2, Str2, ...]
-    pop ssize           # Swap old Size with current stack size
-    2 swap -            # [Size-2, Max, Cur, Len1, Str1, Len2, Str2, ...]
   end
+
+  pop pop swap pop
+  # -> [67622]
+  dup :ints.int_to_str :std.println_out
 end
 
-pop swap pop
-# -> [67622]
-
-:ints.int_to_str :std.println_out
