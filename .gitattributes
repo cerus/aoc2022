@@ -1,0 +1,2 @@
+*.edina linguist-language=R
+src/** linguist-documentation
