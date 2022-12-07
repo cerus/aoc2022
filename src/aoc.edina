@@ -5,3 +5,18 @@ rt neq neq 1 3 lroll pop pop end
 rt lt lt 1 3 lroll pop pop end
 rt lte lte 1 3 lroll pop pop end
 rt gte gte 1 3 lroll pop pop end
+
+# Subtract the two top items without popping them
+rt peek_sub
+  # [A, B] -> [A-B, A, B]
+  over over -  # [A-B, A, B]
+end
+
+# Copy the item at Idx to the front
+rt copy
+  # [Idx, A, B, C]
+  dup 1 + 1 swap rroll   # [C, Idx, A, B]
+  over over swap         # [Idx, C, C, Idx, A, B]
+  2 + 1 swap lroll       # [C, Idx, A, B, C]
+  swap pop               # [C, A, B, C]
+end
