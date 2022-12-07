@@ -1,0 +1,227 @@
+import "stdlib/io/std"
+import "stdlib/math/ints"
+import "stdlib/strings"
+import "stdlib/stack"
+import "aoc"
+import "input/input2"
+
+.part_one
+.part_two
+
+# Solve part one
+rt part_one
+  1 .part
+end
+
+# Solve part two
+rt part_two
+  2 .part
+end
+
+# Solve part one or two
+# Expects either 1 or 2 as input (1 = part one, 2 = part two)
+rt part
+  # [Mode]
+  # Pull input
+  :input2.input
+  ssize 1 swap rroll  # Pull Mode to front
+
+  # Loop through each line, solve it and add the result together
+  0 ssize 2 swap -           # [Size-1, S, M, Len1, L1, ...]
+  while
+    pop 3 :aoc.copy 3 +      # [Len1, S, M, Len1, L1, ...]
+    1 swap lroll             # [M, Len1, L1, S, ...]
+    over over swap           # [Len1, M, M, Len1, L1, S]
+    4 + 1 swap lroll         # [M, Len1, L1, S, M]
+    .solve_line +            # [S+?, M, ...]
+    ssize 2 swap -           # [Size-1, S, M, ...]
+  end
+
+  pop
+  dup :ints.int_to_str " is your score" :strings.concat :std.println_out
+  pop pop
+end
+
+rt solve_line
+  # Expects one line of input [M, Len, L, Space, R]
+  # Responds with the player score of this line
+
+  2 :aoc.eq if
+    # R = Not the shape, but what we have to do
+    # X = Lose
+    # Y = Draw
+    # Z = Win
+    pop swap pop swap       # [L, R]
+    .find_move
+  else
+    # R = The shape
+    pop swap pop swap       # [L, R]
+  end
+
+  .shape_score swap pop     # [L, R]
+  swap
+  .shape_score swap pop     # [R, L]
+  swap
+  .winner 0 swap            # [W, S, L, R]
+
+  dup -1 :aoc.eq if
+    # Draw
+    pop 3 +                 # [S+3, L, R]
+  else if
+    # Player win
+    6 +                     # [S+6, L, R]
+  end
+
+  1 3 lroll pop             # [R, S]
+  +                         # [R+S]
+end
+
+rt find_move
+  # [L, R]
+  swap                      # [R, L]
+  dup "Y" pop :aoc.eq if
+    # We need to end in a Draw
+    pop dup  # Just dup the opponents move
+  else
+    dup "X" pop :aoc.eq if
+      # We need to lose
+      swap
+      dup "A" pop :aoc.eq if
+        # Opponent is Rock
+        swap pop "Z" pop   # Our move is Scissors
+      else
+        dup "B" pop :aoc.eq if
+          # Opponent is Paper
+          swap pop "X" pop   # Our move is Rock
+        else
+          # Opponent is Scissors
+          swap pop "Y" pop   # Our move is Paper
+        end
+      end
+    else
+      # We need to win
+      swap
+      dup "A" pop :aoc.eq if
+        # Opponent is Rock
+        swap pop "Y" pop   # Our move is Paper
+      else
+        dup "B" pop :aoc.eq if
+          # Opponent is Paper
+          swap pop "Z" pop   # Our move is Scissors
+        else
+          # Opponent is Scissors
+          swap pop "X" pop   # Our move is Rock
+        end
+      end
+    end
+  end
+  swap     # [L, R]
+end
+
+rt winner
+  # [L, R] (Left, Right)
+  # Responds with 0 (left), 1 (right) or -1 (error or draw)
+  .is_rock if
+    # L = Rock
+    swap  # [R, L]
+    .is_scissors if
+      # L won
+      swap 0
+    else
+      .is_rock if
+        # Draw
+        swap -1
+      else
+        # R won
+        swap 1
+      end
+    end
+  else
+    .is_paper if
+      # L = Paper
+      swap  # [R, L]
+      .is_rock if
+        # L won
+        swap 0
+      else
+        .is_paper if
+          # Draw
+          swap -1
+        else
+          # R won
+          swap 1
+        end
+      end
+    else
+      .is_scissors if
+        # L = Scissors
+        swap  # [R, L]
+        .is_paper if
+          # L won
+          swap 0
+        else
+          .is_scissors if
+            # Draw
+            swap -1
+          else
+            # R won
+            swap 1
+          end
+        end
+      else
+        # Error
+        -1
+      end
+    end
+  end
+end
+
+# Calculate the score for shapes
+# A, X = Rock = 1
+# B, Y = Paper = 2
+# C, Z = Scissors = 3
+rt shape_score
+  # [S]
+  dup "A" pop :aoc.eq
+  over "X" pop :aoc.eq
+  | if
+    # Rock
+    .score_rock
+  else
+    dup "B" pop :aoc.eq
+    over "Y" pop :aoc.eq
+    | if
+      # Paper
+      .score_paper
+    else
+      dup "C" pop :aoc.eq
+      over "Z" pop :aoc.eq
+      | if
+        # Scissors
+        .score_scissors
+      else
+        # None
+        -1
+      end
+    end
+  end
+end
+
+rt is_rock
+  # [X]
+  dup .score_rock :aoc.eq
+end
+
+rt is_paper
+  # [X]
+  dup .score_paper :aoc.eq
+end
+
+rt is_scissors
+  # [X]
+  dup .score_scissors :aoc.eq
+end
+
+rt score_rock 1 end
+rt score_paper 2 end
+rt score_scissors 3 end
