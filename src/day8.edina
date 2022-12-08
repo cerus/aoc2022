@@ -1,0 +1,605 @@
+import "stdlib/io/std"
+import "stdlib/math/ints"
+import "stdlib/strings"
+import "stdlib/stack"
+import "aoc"
+import "input/input8"
+
+
+# -------------------------------------------------------------------------------------------------------------
+# WARNING
+# This solution is a huge pile of shitty code. I have been working on this for more than 10 hours now and
+# I can't be bothered to clean this up. The documentation is wrong in a few places and there are
+# leftover debug outputs everywhere.
+# Running this solution will cost you around three minutes of your time - Yes, it is that slow.
+# Continue at your own risk. You have been warned.
+# -------------------------------------------------------------------------------------------------------------
+
+
+.part_one
+.part_two
+
+rt part_two
+  :input8.input
+
+  # [Rows, Len1, Row1, Len2, Row2, ...]
+  0 0 0                       # [Max, ?, ?, Rows, Len1, Row1, Len2, Row2, ...]
+  1 .calc_total 2 swap -      # [Total, Max, ?, ?, Rows, Len1, Row1, Len2, Row2, ...]
+  2 4 lroll pop pop           # [Total, Max, Rows, Len1, Row1, Len2, Row2, ...]
+  1 swap lroll                # [Rows, Len1, Row1, Len2, Row2, ..., Max]
+
+  dup 1 swap -                # [Row, Rows, Len1, Row1, Len2, Row2, ..., Max]
+  while
+    1 swap -                  # [Row-1, Rows, Len1, Row1, Len2, Row2, ..., Max]
+    3 :aoc.copy 1 swap -
+    while
+      # [Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Max]
+      1 swap -                # [Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Max]
+      .calc_scenic_score      # [TSc, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Max]
+      1 .calc_total 1 +       # [Total+2, TSc, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Max]
+      1 swap rroll            # [Max, TSc, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ...]
+      lt if
+        # Max < TSc
+        pop dup
+      end
+      2 .calc_total           # [Total+2, Max, TSc, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ...]
+      1 swap lroll            # [TSc, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Max]
+      pop                     # [Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Max]
+      #native_stack_debug
+      #"---" :std.println_out
+
+      dup 1 :aoc.eq if
+        pop 0
+      end
+    end
+    pop
+    dup 1 :aoc.eq if
+      pop 0
+    end
+  end
+  pop
+  #native_stack_debug
+  0 0 0 .calc_total 1 +       # [Total, 0, 0, Rows, Len1, Row1, Len2, Row2, ..., Max]
+  1 3 lroll pop pop           # [Total, Rows, Len1, Row1, Len2, Row2, ..., Max]
+  2 swap -                    # [Total-2, Rows, Len1, Row1, Len2, Row2, ..., Max]
+  1 swap rroll                # [Max, Rows, Len1, Row1, Len2, Row2, ...]
+
+  :ints.int_to_str :std.println_out
+end
+
+# Loop through each cell of the inner grid, check if it is visible and sum the result
+rt part_one
+  :input8.input               # [Rows, Len1, Row1, Len2, Row2]
+  .grid_outline               # [Res, Rows, Len1, Row1, Len2, Row2]
+  #dup :ints.int_to_str :std.println_out
+  swap                        # [Rows, Res, Len1, Row1, Len2, Row2]
+
+  dup 1 swap -                # [Row, Rows, Res, Len1, Row1, Len2, Row2]
+  while
+    1 swap -                  # [Row-1, Rows, Res, Len1, Row1, Len2, Row2]
+    4 :aoc.copy 1 swap -      # [Col, Row, Rows, Res, Len1, Row1, Len2, Row2]
+    while
+      #-" :std.println_out
+      1 swap -                # [Col-1, Row, Rows, Res, Len1, Row1, Len2, Row2]
+      3 :aoc.copy             # [Rows, Col-1, Row, Rows, Res, Len1, Row1, Len2, Row2]
+      6 :aoc.copy 1 + *       # [(Len1+1)*Rows, Col-1, Row, Rows, Res, Len1, Row1, Len2, Row2]
+      1 5 rroll swap          # [(Len1+1)*Rows, Res, Col-1, Row, Rows, Len1, Row1, Len2, Row2]
+      4 + 1 swap lroll        # [Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Res]
+
+      .is_visible             # [Vis, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Res]
+
+      4 :aoc.copy             # [Rows, Vis, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Res]
+      5 :aoc.copy 1 + *       # [(Len1+1)*Rows, Vis, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Res]
+      5 + 1 swap rroll        # [Res, Vis, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ...]
+      swap if
+        1 +                   # [Res+1, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ...]
+        #dup :ints.int_to_str " is now the result" :strings.concat :std.println_out
+      end
+      1 4 lroll               # [Col, Row, Rows, Res, Len1, Row1, Len2, Row2, ...]
+
+      dup 1 :aoc.eq if
+        pop 0
+      end
+    end
+    pop
+
+    dup 1 :aoc.eq if
+      pop 0
+    end
+  end
+  pop
+  pop :ints.int_to_str :std.println_out
+end
+
+rt calc_scenic_score
+  # [Col, Row, Rows, Len1, Row1, Len2, Row2, ...]
+  0 .get_grid_element                 # [Cur, Col, Row, Rows, Len1, Row1, Len2, Row2, ...]
+  #dup :ints.int_to_str :std.println_out
+  1 .calc_total 1 swap lroll          # [Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  0 1 .calc_total 1 + 1 swap lroll    # [Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc]
+  0 1 .calc_total 2 + 1 swap lroll    # [Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+
+  # Row +
+  3 :aoc.copy 1 swap - 3 :aoc.copy :aoc.neq if
+  #"Row+ Start" :std.println_out
+  -1                                # [-1, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  over                              # [Col, -1, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  swap
+  while
+    dup -1 :aoc.eq if
+      pop 3 :aoc.copy
+    end
+
+    1 +                             # [Row+1, Col, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    #dup :ints.int_to_str :std.println_out
+    swap                            # [Col, Row, Col, Row, Rows, ........]
+    2 4 rroll                       # [Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    2 .get_grid_element             # [Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    3 .calc_total 1 +               # [Size+4, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    :aoc.copy                       # [Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    4 .calc_total 2 +               # [Size+6, Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    1 swap rroll                    # [Sc, Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, TSc]
+    1 +                             # [Sc+1, Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, TSc]
+    5 .calc_total 1 +               # [Size+6, Sc+1, Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, TSc]
+    1 swap lroll                    # [Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+
+    :aoc.lte if
+      #"Cur <= Next" :std.println_out
+      # Cur <= Nxt
+      # [Col+1, Row-1, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+      2 4 rroll                     # [Col+1, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+      swap pop 0 swap                         # [Col->0, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+    else
+      2 4 rroll                     # [Col+1, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+    end
+
+    5 :aoc.copy 3 :aoc.copy         # [Row, Rows, Col+1, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+    swap 1 swap -                   # [Rows-1, Row, Col+1, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+    :aoc.eq if
+      #"Ending Row+" :std.println_out
+      swap pop 0 swap
+    end
+    swap
+  end
+  #"Row+ End" :std.println_out
+  else 0 0 end
+  # [Col, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  pop pop                           # [Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  0 .calc_total 3 +                 # [Size+3, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  2 swap rroll                      # [Sc, TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  #dup :ints.int_to_str " = Row+ Sc" :strings.concat :std.println_out
+  over 0 :aoc.eq if
+    # TSc == 0
+    swap pop 0                      # [Sc->0, Sc->TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  else
+    # TSC != 0
+    dup 0 :aoc.neq if
+      # Sc != 0
+      * 0                           # [Sc->0, Sc*TSc->TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+    else pop 0 end                  # [Sc->0, TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  end
+  2 .calc_total 1 +                 # [Size+3, Sc, TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  2 swap lroll                      # [Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+
+  #"Betweener" :std.println_out
+  #native_stack_debug
+
+  # Col -
+  #"Col- Start" :std.println_out
+  over                              # [Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  over                              # [Col, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  while
+    1 swap -                        # [Col-1, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    #dup :ints.int_to_str :std.println_out
+    2 4 rroll                       # [Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    2 .get_grid_element             # [Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    3 .calc_total 1 +               # [Size+4, Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    :aoc.copy                       # [Cur, Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    4 .calc_total 2 +               # [Size+6, Cur, Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    1 swap rroll                    # [Sc, Cur, Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, TSc]
+    1 +                             # [Sc+1, Cur, Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, TSc]
+    5 .calc_total 1 +               # [Size+6, Sc+1, Cur, Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, TSc]
+    1 swap lroll                    # [Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+
+    :aoc.lte if
+      #"Cur <= Next" :std.println_out
+      # Cur <= Nxt
+      # [Col-1, Row-1, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+      2 4 rroll                     # [Col-1, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+      pop 0                         # [Col->0, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+    else
+      2 4 rroll                     # [Col-1, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+    end
+  end
+  #"Col- End" :std.println_out
+  # [Col, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  pop pop                           # [Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  0 .calc_total 3 +                 # [Size+3, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  2 swap rroll                      # [Sc, TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  #dup :ints.int_to_str " = Col- Sc" :strings.concat :std.println_out
+  over 0 :aoc.eq if
+    # TSc == 0
+    swap pop 0                      # [Sc->0, Sc->TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  else
+    # TSC != 0
+    dup 0 :aoc.neq if
+      # Sc != 0
+      * 0                           # [Sc->0, Sc*TSc->TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+    else pop 0 end                  # [Sc->0, TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  end
+  2 .calc_total 1 +                 # [Size+3, Sc, TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  2 swap lroll                      # [Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+
+  #"Betweener" :std.println_out
+  #native_stack_debug
+
+  # Col +
+  4 :aoc.copy 1 swap - over :aoc.neq if
+  #"Col+ Start" :std.println_out
+  over                              # [Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  -1                                # [-1, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  while
+    dup -1 :aoc.eq if
+      pop over
+    end
+
+    1 +                             # [Col+1, Row-1, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    #dup :ints.int_to_str :std.println_out
+    2 4 rroll                       # [Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    2 .get_grid_element             # [Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    3 .calc_total 1 +               # [Size+4, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    :aoc.copy                       # [Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    4 .calc_total 2 +               # [Size+6, Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    1 swap rroll                    # [Sc, Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, TSc]
+    1 +                             # [Sc+1, Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, TSc]
+    5 .calc_total 1 +               # [Size+6, Sc+1, Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, TSc]
+    1 swap lroll                    # [Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+
+    :aoc.lte if
+      #"Cur <= Next" :std.println_out
+      # Cur <= Nxt
+      # [Col+1, Row-1, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+      2 4 rroll                     # [Col+1, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+      pop 0                         # [Col->0, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+    else
+      2 4 rroll                     # [Col+1, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+    end
+
+    6 :aoc.copy over                # [Col+1, Len1, Col+1, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+    swap 1 swap -                   # [Len1-1, Col+1, Col+1, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+    :aoc.eq if
+      #"Ending Col+" :std.println_out
+      pop 0
+    end
+  end
+  #"Col+ End" :std.println_out
+  else 0 0 end
+  # [Col, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  pop pop                           # [Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  0 .calc_total 3 +                 # [Size+3, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  2 swap rroll                      # [Sc, TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  #dup :ints.int_to_str " = Col+ Sc" :strings.concat :std.println_out
+  over 0 :aoc.eq if
+    # TSc == 0
+    swap pop 0                      # [Sc->0, Sc->TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  else
+    # TSC != 0
+    dup 0 :aoc.neq if
+      # Sc != 0
+      * 0                           # [Sc->0, Sc*TSc->TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+    else pop 0 end                  # [Sc->0, TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  end
+  2 .calc_total 1 +                 # [Size+3, Sc, TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  2 swap lroll                      # [Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+
+  #"Betweener" :std.println_out
+  #native_stack_debug
+
+  # Row -
+  #"Row- Start" :std.println_out
+  over                              # [Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  over                              # [Col, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  swap
+  while
+    1 swap -                        # [Row-1, Col, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    #dup :ints.int_to_str :std.println_out
+    swap
+    2 4 rroll                       # [Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    2 .get_grid_element             # [Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    3 .calc_total 1 +               # [Size+4, Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    :aoc.copy                       # [Cur, Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    4 .calc_total 2 +               # [Size+6, Cur, Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+    1 swap rroll                    # [Sc, Cur, Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, TSc]
+    1 +                             # [Sc+1, Cur, Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, TSc]
+    5 .calc_total 1 +               # [Size+6, Sc+1, Cur, Nxt, Col, Row, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, TSc]
+    1 swap lroll                    # [Cur, Nxt, Col, Row, Col+1, Row-1, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+
+    :aoc.lte if
+      #"Cur <= Next" :std.println_out
+      # Cur <= Nxt
+      # [Col-1, Row-1, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+      2 4 rroll                     # [Col, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+      swap pop 0 swap               # [Col, Row->0, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+    else
+      2 4 rroll                     # [Col-1, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc+1, TSc]
+    end
+    swap
+  end
+  swap
+  #"Row- End" :std.println_out
+  # [Col, Row, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  pop pop                           # [Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  0 .calc_total 3 +                 # [Size+3, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur, Sc, TSc]
+  2 swap rroll                      # [Sc, TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  #dup :ints.int_to_str " = Row- Sc" :strings.concat :std.println_out
+  over 0 :aoc.eq if
+    # TSc == 0
+    swap pop 0                      # [Sc->0, Sc->TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  else
+    # TSC != 0
+    dup 0 :aoc.neq if
+      # Sc != 0
+      * 0                           # [Sc->0, Sc*TSc->TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+    else pop 0 end                  # [Sc->0, TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  end
+
+  pop                               # [TSc, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+  1 .calc_total 1 + 1 swap  rroll pop
+  #native_stack_debug
+end
+
+rt is_visible
+  # [Col, Row, Rows, Len1, Row1, Len2, Row2, ...]
+  0 .get_grid_element            # [Cur, Col, Row, Rows, Len1, Row1, Len2, Row2, ...]
+  1 .calc_total
+  1 swap lroll     # [Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+  # Col +
+  0 over 1 while pop
+    # [Col, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+    1 +                    # [Col+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+    #dup :ints.int_to_str " Col+" :strings.concat :std.println_out
+    4 :aoc.copy            # [Row, Col+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+    swap                   # [Col+1, Row, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+    6 :aoc.copy            # [Rows, Col+1, Row, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+    1 3 lroll              # [Col+1, Row, Rows, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+    3 7 lroll              # [Vis, Col, Row, Rows, Col+1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+    4 .get_grid_element    # [Nxt, Vis, Col, Row, Rows, Col+1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+    5 .calc_total 1 +      # [Size+6, Nxt, Vis, Col, Row, Rows, Col+1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+    :aoc.copy              # [Cur, Nxt, Vis, Col, Row, Rows, Col+1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+    :aoc.gt if
+      # Visible
+      # [Vis, Col, Row, Rows, Col+1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+      5 :aoc.copy 8 :aoc.copy 1 swap - :aoc.eq if
+        1 +               # [Vis->0, Col, Row, Rows, Col+1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+        #"Col+ Visible" :std.println_out
+      end
+
+      3 7 rroll            # [Col+1, Row, Rows, Vis->0, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      1 3 lroll pop pop    # [Col+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+      # if (Vis > 0 && Col < Len - 1) { push 1 } else { push 0 }
+      over 7 :aoc.copy     # [Len1, Vis, Col+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      1 swap -             # [Len1-1, Vis, Col+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      3 :aoc.copy :aoc.lt # [Col+1<Len1-1, Vis, Col+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      swap pop 1           # [0<Vis, Col+1<Len1-1, Col+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      &                    # [0<Vis & Col+1<Len1-1, Col+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      if 1 else 0 end
+    else
+      3 7 rroll swap       # [Col+1, Col, Rows, Vis->0, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      1 3 lroll pop pop    # [Col+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      0
+    end
+  end pop
+  # [Col, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+  #pop dup 0 :aoc.eq if
+  pop 0 if
+    # Not visible
+    pop 0
+    1 .calc_total 1 + 1 swap rroll pop
+    #"out 1" :std.println_out
+  else
+    # Still visible
+    # [Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+    over
+
+    # Col -
+    1 while pop
+      # [Col, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+      1 swap -               # [Col-1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      #dup :ints.int_to_str " Col-" :strings.concat :std.println_out
+      4 :aoc.copy            # [Row, Col-1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      swap                   # [Col-1, Row, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      6 :aoc.copy            # [Rows, Col-1, Row, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      1 3 lroll              # [Col-1, Row, Rows, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      3 7 lroll              # [Vis, Col, Row, Rows, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+      4 .get_grid_element    # [Nxt, Vis, Col, Row, Rows, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      5 .calc_total 1 +      # [Size+6, Nxt, Vis, Col, Row, Rows, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+      :aoc.copy              # [Cur, Nxt, Vis, Col, Row, Rows, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+      :aoc.gt if
+        # Visible
+        # [Vis, Col, Row, Rows, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+        5 :aoc.copy 0 :aoc.eq if
+          1 +                # [Vis->0, Col, Row, Rows, Col-1, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          #"Col- Visible" :std.println_out
+        end
+
+        3 7 rroll            # [Col-1, Row, Rows, Vis->0, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+        1 3 lroll pop pop    # [Col-1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+        # if (Vis > 0 && Col > 0) { push 1 } else { push 0 }
+        over pop 1           # [0<Vis, Col-1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+        over 0 :aoc.lt      # [0<Col-1, 0<Vis, Col-1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+        &                    # [0<Col-1 & 0<Vis, Col-1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+        if 1 else 0 end
+      else
+        3 7 rroll swap       # [Col-1, Col, Rows, Vis->0, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+        1 3 lroll pop pop    # [Col-1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+        0
+      end
+    end pop
+    # [Col, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+    #pop dup 0 :aoc.eq if
+    pop 0 if
+      # Not visible
+      pop 0
+      1 .calc_total 1 + 1 swap rroll pop
+      #"out 2" :std.println_out
+    else
+      # Still visible
+      3 :aoc.copy
+
+      # Row +
+      1 while pop
+        # [Row, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+        1 +                    # [Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+        #dup :ints.int_to_str " Row+" :strings.concat :std.println_out
+        3 :aoc.copy            # [Col, Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+        6 :aoc.copy            # [Rows, Col, Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+        1 3 lroll              # [Col, Row+1, Rows, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+        3 7 lroll              # [Vis, Col, Row, Rows, Col, Row+1, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+        4 .get_grid_element    # [Nxt, Vis, Col, Row, Rows, Col, Row+1, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+        5 .calc_total 1 +      # [Size+6, Nxt, Vis, Col, Row, Rows, Col, Row+1, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+        :aoc.copy              # [Cur, Nxt, Vis, Col, Row, Rows, Col, Row+1, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+        :aoc.gt if
+          # Visible
+          # [Vis, Col, Row, Rows, Col, Row+1, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+          6 :aoc.copy 8 :aoc.copy 1 swap - :aoc.eq if
+            1 +                # [Vis->0, Col, Row, Rows, Col, Row+1, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+            #"Row+ Visible" :std.println_out
+          end
+
+          3 7 rroll swap       # [Row+1, Col, Rows, Vis->0, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          1 3 lroll pop pop    # [Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+          # if (Vis >= 0 && Row < Rows - 1) { push 1 } else { push 0 }
+          over pop 1           # [0<Vis, Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          over 7 :aoc.copy     # [Rows, Row+1, 0<Vis, Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          1 swap -             # [Rows-1, Row+1, 0<Vis, Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          :aoc.gt
+          &                    # [Rows-1>Row+1 & 0<Vis, Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          if 1 else 0 end
+        else
+          3 7 rroll swap       # [Row-1, Col, Rows, Vis->0, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          1 3 lroll pop pop    # [Row-1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          0
+        end
+      end pop
+      # [Row, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+      #pop dup 0 :aoc.eq if
+      pop 0 if
+        # Not visible
+        pop 0
+        1 .calc_total 1 + 1 swap rroll pop
+        #"out 3" :std.println_out
+      else
+        # Still visible
+        3 :aoc.copy
+
+        # Row -
+        1 while pop
+          # [Row, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+          1 swap -               # [Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          #dup :ints.int_to_str " Row-" :strings.concat :std.println_out
+          3 :aoc.copy            # [Col, Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          6 :aoc.copy            # [Rows, Col, Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          1 3 lroll              # [Col, Row+1, Rows, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          3 7 lroll              # [Vis, Col, Row, Rows, Col, Row+1, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+          4 .get_grid_element    # [Nxt, Vis, Col, Row, Rows, Col, Row+1, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          5 .calc_total 1 +      # [Size+6, Nxt, Vis, Col, Row, Rows, Col, Row+1, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+          :aoc.copy              # [Cur, Nxt, Vis, Col, Row, Rows, Col, Row+1, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+          :aoc.gt if
+            # Visible
+            # [Vis, Col, Row, Rows, Col, Row+1, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+            6 :aoc.copy 0 :aoc.eq if
+              1 +                # [Vis->0, Col, Row, Rows, Col, Row+1, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+              #"Row- Visible" :std.println_out
+            end
+
+            3 7 rroll swap       # [Row+1, Col, Rows, Vis->0, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+            1 3 lroll pop pop    # [Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+            # if (Vis >= 0 && Row > 0) { push 1 } else { push 0 }
+            over pop 1           # [0<Vis, Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+            over 0 :aoc.lt      # [0<Row+1, 0<Vis, Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+            &                    # [0<Row+1 & 0<Vis, Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+            if 1 else 0 end
+          else
+            3 7 rroll swap       # [Row+1, Col, Rows, Vis->0, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+            1 3 lroll pop pop    # [Row+1, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+            0
+          end
+        end pop
+        # [Row, Vis, Col, Row, Rows, Len1, Row1, Len2, Row2, ..., Cur]
+
+        pop
+        1 .calc_total 1 + 1 swap rroll pop
+        #dup :ints.int_to_str " <<<<<<<<<<<<<<<<<<< " :strings.concat :std.println_out
+        dup 0 :aoc.gte if
+          pop 0
+        else
+          pop 1
+        end
+      end
+    end
+  end
+end
+
+rt calc_total
+  # [Skp, Col, Row, Rows, Len1, Row1, Len2, Row2, ...]
+  dup 4 + :aoc.copy        # [Skp+5, Skp, ?, Col, Row, Rows, Len1, Row1, Len2, Row2, ...]
+  over 6 + :aoc.copy       # [Rows, Len1, Skp, ?, Col, Row, Rows, Len1, Row1, Len2, Row2, ...]
+  swap 1 + * 3 + +         # [Rows*(Len1+1)+3+Skp, ?, Col, Row, Rows, Len1, Row1, Len2, Row2, ...]
+end
+
+rt get_grid_element
+  # [Skp, Col, Row, Rows, Len1, Row1, Len2, Row2]
+  dup 5 + :aoc.copy 1 +    # [Len1+1, Skp, Col, Row, Rows, Len1, Row1, Len2, Row2]
+  over 4 + :aoc.copy *     # [(Len1+1)*Row, Skp, Col, Row, Rows, Len1, Row1, Len2, Row2]
+  over 3 + :aoc.copy 1 + + # [(Len1+1)*Row+(Col+1), Skp, Col, Row, Rows, Len1, Row1, Len2, Row2]
+  swap 4 + +               # [(Skp+4)+(Len1+1)*Row+(Col+1), Col, Row, Rows, Len1, Row1, Len2, Row2]
+  :aoc.copy                # [X, Col, Row, Rows, Len1, Row1, Len2, Row2]
+
+
+  #dup 5 + :aoc.copy 1 +    # [Len1+1, Skp, Col, Row, Rows, Len1, Row1, Len2, Row2]
+  #over 4 + :aoc.copy *     # [(Len1+1)*Row, Skp, Col, Row, Rows, Len1, Row1, Len2, Row2]
+  #over 3 + :aoc.copy 1 + + # [(Len1+1)*Row+(Col+1), Skp, Col, Row, Rows, Len1, Row1, Len2, Row2]
+  #5 +                      # [(Len1+1)*Row+(Col+1)+2, Skp, Col, Row, Rows, Len1, Row1, Len2, Row2]
+  #:aoc.copy swap pop       # [X, Col, Row, Rows, Len1, Row1, Len2, Row2]
+end
+
+rt grid_outline
+  # [Rows, Len1, Row1, Len2, Row2, ...]
+  dup 2 *        # [Rows*2, Rows, Len1, Row1, Len2, Row2, ...]
+  3 :aoc.copy    # [Len1, Rows*2, Rows, Len1, Row1, Len2, Row2, ...]
+  2 swap -       # [Len1-2, Rows*2, Rows, Len1, Row1, Len2, Row2, ...]
+  2 * +          # [(Len1-2)*2 + Rows*2, Rows, Len1, Row1, Len2, Row2, ...]
+end
+
+rt calc_input_row_amt
+  :input8.input
+  1 + dup
+  ssize /
+  over over *
+  swap over 2 + 1 swap lroll
+  :stack.multi_pop
+end
