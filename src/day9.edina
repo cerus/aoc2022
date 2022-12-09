@@ -1,0 +1,312 @@
+import "stdlib/io/std"
+import "stdlib/math/ints"
+import "stdlib/strings"
+import "stdlib/stack"
+import "aoc"
+import "input/input9"
+
+:input9.input
+500 500
+#.calc_rows_cols
+#native_stack_debug
+#2 * swap 2 * swap
+dup :ints.int_to_str " Cols" :strings.concat :std.println_out
+over :ints.int_to_str " Rows" :strings.concat :std.println_out
+#native_stack_debug
+.walk_grid
+
+#0 0 1 2 .tail_pos_outdated
+#native_stack_debug
+
+#"01" 10 :ints.parse_int
+
+rt walk_grid
+  # [Cols, Rows, Lines, LineX]
+  .create_grid               # [Cols, Rows, Grid, Lines, LineX]
+  over over * 3 +            # [Cols*Rows+3, Cols, Rows, Grid, Lines, LineX]
+  :aoc.move_in               # [Lines, Cols, Rows, Grid, LineX]
+  1 3 lroll                  # [Cols, Rows, Lines, Grid, LineX]
+  over 2 swap /              # [Rows/2, Cols, Rows, Lines, Grid, LineX]
+  over 2 swap /              # [Cols/2, Rows/2, Cols, Rows, Lines, Grid, LineX]
+  over over                  # [Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+  7 :aoc.copy                # [Li, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+
+  while
+    # [Li, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+    dup :ints.int_to_str " remaining" :strings.concat :std.println_out
+
+    1 swap -                 # [Li-1, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+    dup 5 .get_line_num      # [Ln, Li, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+    over 6 .get_line_dir     # [Ld, Ln, Li, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+    swap                     # [Ln, Ld, Li, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+
+    while
+      # [Ln, Ld, Li, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+      swap                   # [Ld, Ln, Li, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+      dup 85 :aoc.eq if
+        # Up
+        #"Up" :std.println_out
+        3 7 lroll            # [Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        over over            # [Hx, Hy, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        swap 1 + swap        # [Hx, Hy+1, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        3 9 rroll            # [Ld, Ln, Li, Hx, Hy+1, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+      else dup 82 :aoc.eq if
+        # Right
+        #"Right" :std.println_out
+        3 7 lroll            # [Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        over over            # [Hx, Hy, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        1 swap -             # [Hx-1, Hy, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        3 9 rroll            # [Ld, Ln, Li, Hx-1, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+      else dup 68 :aoc.eq if
+        # Down
+        #"Down" :std.println_out
+        3 7 lroll            # [Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        over over            # [Hx, Hy, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        swap 1 swap - swap   # [Hx, Hy-1, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        3 9 rroll            # [Ld, Ln, Li, Hx, Hy-1, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+      else dup 76 :aoc.eq if
+        # Left
+        #"Left" :std.println_out
+        3 7 lroll            # [Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        over over            # [Hx, Hy, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        1 +                  # [Hx+1, Hy, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        3 9 rroll            # [Ld, Ln, Li, Hx+1, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+      end end end end
+
+      # [Ld, Ln, Li, Hx, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+      3 9 lroll              # [Hx, Hy, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+      2 4 rroll              # [Hx, Hy, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+      2 9 lroll              # [Hx, Hy, Tx, Ty, Ld, Ln, Li, Hx, Hy, Cols, Rows, Lines, Grid, LineX]
+
+      .tail_pos_outdated if
+        #"Tail is outdated" :std.println_out
+
+        # Reset
+        2 9 rroll            # [Hx, Hy, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        2 4 rroll            # [Hx, Hy, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        3 9 rroll            # [Ld, Ln, Li, Hx, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+
+        # Record current tail pos
+        1                    # [I, Ld, Ln, Li, Hx, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+        10 :aoc.copy         # [Ty, I, Ld, Ln, Li, Hx, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+        #dup :ints.int_to_str " is old tail y" :strings.concat :std.println_out
+        10 :aoc.copy         # [Tx, Ty, I, Ld, Ln, Li, Hx, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+        #dup :ints.int_to_str " is old tail x" :strings.concat :std.println_out
+        9 .set_grid_item     # [Ld, Ln, Li, Hx, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+
+        # Update tail pos
+        2 9 rroll            # [Tx, Ty, Ld, Ln, Li, Hx, Hy, Hx, Hy, Cols, Rows, Lines, Grid, LineX]
+        pop pop              # [Ld, Ln, Li, Hx, Hy, Hx, Hy, Cols, Rows, Lines, Grid, LineX]
+        7 :aoc.copy          # [Ty, Ld, Ln, Li, Hx, Hy, Hx, Hy, Cols, Rows, Lines, Grid, LineX]
+        #dup :ints.int_to_str " is now tail y" :strings.concat :std.println_out
+        7 :aoc.copy          # [Tx, Ty, Ld, Ln, Li, Hx, Hy, Hx, Hy, Cols, Rows, Lines, Grid, LineX]
+        #dup :ints.int_to_str " is now tail x" :strings.concat :std.println_out
+        2 9 lroll            # [Ld, Ln, Li, Hx, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+
+        # Record new tail pos
+        1                    # [I, Ld, Ln, Li, Hx, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+        10 :aoc.copy         # [Ty, I, Ld, Ln, Li, Hx, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+        10 :aoc.copy         # [Tx, Ty, I, Ld, Ln, Li, Hx, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+        9 .set_grid_item     # [Ld, Ln, Li, Hx, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+      else
+        # Reset
+        2 9 rroll            # [Hx, Hy, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        2 4 rroll            # [Hx, Hy, Hx, Hy, Tx, Ty, Ld, Ln, Li, Cols, Rows, Lines, Grid, LineX]
+        3 9 rroll            # [Ld, Ln, Li, Hx, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+      end
+
+      # TODO: Decrement Ln at end
+      swap 1 swap -          # [Ln-1, Ld, Li, Hx, Hy, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+
+      # We need [Ln, Ld, Li, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+      2 7 rroll              # [Hx, Hy, Ln-1, Ld, Li, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+      #native_stack_debug
+      pop pop                # [Ln-1, Ld, Li, Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+    end
+    pop pop
+
+    #"Inner ended" :std.println_out
+    #native_stack_debug
+  end
+  pop
+
+  # [Hx, Hy, Tx, Ty, Cols, Rows, Lines, Grid, LineX]
+  pop pop pop pop            # [Cols, Rows, Lines, Grid, LineX]
+  * swap pop                 # [Cols*Rows, Grid, LineX]
+  1 swap -
+  dup :ints.int_to_str " > Iter" :strings.concat :std.println_out
+  while
+    # [I, Grid, LineX]
+    1 3 lroll
+    +
+    #dup :ints.int_to_str " Res" :strings.concat :std.println_out
+    swap
+    1 swap -
+  end
+  pop
+  :ints.int_to_str :std.println_out
+end
+
+rt tail_pos_outdated
+  # [Hx, Hy, Tx, Ty]
+  dup 4 :aoc.copy :aoc.eq if
+    # X is the same
+    #"X same" :std.println_out
+    over 5 :aoc.copy :aoc.eq if
+      # Y is the same
+      # Do nothing, positions are completely equal
+      #"Y same" :std.println_out
+      0
+    else
+      # Y is different
+      #"Y diff" :std.println_out
+      over 5 :aoc.copy - :aoc.positive 1 :aoc.lt if
+        # Difference in Y is >1, pos is outdated
+        #"Y Diff >1" :std.println_out
+        1
+      else
+        # Difference in Y is <=1, pos is not outdated
+        #"Y Diff <=1" :std.println_out
+        0
+      end
+    end
+  else
+    # X is different
+    #"X diff" :std.println_out
+    over 5 :aoc.copy :aoc.eq if
+      # Y is the same
+      #"Y same" :std.println_out
+      dup 4 :aoc.copy - :aoc.positive 1 :aoc.lt if
+        # Difference in X is >1, pos is outdated
+        #"X Diff >1" :std.println_out
+        1
+      else
+        # Difference in X is <=1, pos is not outdated
+        #"X Diff <=1" :std.println_out
+        0
+      end
+    else
+      # Y is different - diagonal change
+      #"Y diff (diag)" :std.println_out
+
+      dup 4 :aoc.copy - :aoc.positive 1 :aoc.lt             # [XD, Hx, Hy, Tx, Ty]
+      3 :aoc.copy 6 :aoc.copy - :aoc.positive 1 :aoc.lt     # [YD, XD, Hx, Hy, Tx, Ty]
+      |                                                     # [Res, Hx, Hy, Tx, Ty]
+    end
+  end
+end
+
+rt get_line_dir
+  # [Skp, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  # Range of Li: 0 -> Lines-1
+  # Size of one line on the stack: 5 (Len + 4 chars)
+  dup 4 +                    # [Skp+2, Skp, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  :aoc.copy                  # [Rows, Skp, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  swap                       # [Skp, Rows, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  dup 4 +                    # [Skp+4, Skp, Rows, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  :aoc.copy                  # [Cols, Skp, Rows, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  1 3 rroll *                # [Rows*Cols, Skp, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  1 3 lroll                  # [Skp, Li, Rows*Cols, ..., Cols, Rows, Lines, Grid, LineX]
+  5 + swap 5 *               # [Li*5, Skp+5, Rows*Cols, ..., Cols, Rows, Lines, Grid, LineX]
+  + 3 + +                    # [(Li*5)+(Skp+4)+3+(Rows*Cols), ..., Cols, Rows, Lines, Grid, LineX]
+  :aoc.copy                  # [Dir, ..., Cols, Rows, Lines, Grid, LineX]
+end
+
+rt get_line_num
+  # [Skp, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  # Range of Li: 0 -> Lines-1
+  # Size of one line on the stack: 5 (Len + 4 chars)
+  dup 4 +                    # [Skp+2, Skp, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  :aoc.copy                  # [Rows, Skp, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  swap                       # [Skp, Rows, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  dup 4 +                    # [Skp+4, Skp, Rows, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  :aoc.copy                  # [Cols, Skp, Rows, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  1 3 rroll *                # [Rows*Cols, Skp, Li, ..., Cols, Rows, Lines, Grid, LineX]
+  1 3 lroll                  # [Skp, Li, Rows*Cols, ..., Cols, Rows, Lines, Grid, LineX]
+  5 + swap 5 *               # [Li*5, Skp+5, Rows*Cols, ..., Cols, Rows, Lines, Grid, LineX]
+  + 2 + +                    # [(Li*5)+(Skp+4)+2+(Rows*Cols), ..., Cols, Rows, Lines, Grid, LineX]
+  dup                        # [(Li*5)+(Skp+4)+2+(Rows*Cols), (Li*5)+(Skp+4)+2+(Rows*Cols), ..., Cols, Rows, Lines, Grid, LineX]
+  :aoc.copy swap             # [(Li*5)+(Skp+4)+2+(Rows*Cols), ?, ..., Cols, Rows, Lines, Grid, LineX]
+  1 swap - :aoc.copy         # [?, ?, ..., Cols, Rows, Lines, Grid, LineX]
+  2 10 :ints.parse_int       # [Num, ..., Cols, Rows, Lines, Grid, LineX]
+end
+
+rt get_grid_item
+  # [Skp, X, Y, ..., Cols, Rows, Lines, Grid, LineX]
+  dup 5 +                    # [Skp+5, Skp, X, Y, ..., Cols, Rows, Lines, Grid, LineX]
+  :aoc.copy                  # [Rows, Skp, X, Y, ..., Cols, Rows, Lines, Grid, LineX]
+  1 4 rroll *                # [Y*Rows, Skp, X, ..., Cols, Rows, Lines, Grid, LineX]
+  1 3 rroll +                # [X+(Y*Rows), Skp, ..., Cols, Rows, Lines, Grid, LineX]
+  + 4 +                      # [X+(Y*Rows)+Skp+3, ..., Cols, Rows, Lines, Grid, LineX]
+  :aoc.copy                  # [Elem, ..., Cols, Rows, Lines, Grid, LineX]
+end
+
+rt set_grid_item
+  # [Skp, X, Y, I, ..., Cols, Rows, Lines, Grid, LineX]
+  dup 6 +                    # [Skp+5, Skp, X, Y, I, ..., Cols, Rows, Lines, Grid, LineX]
+  :aoc.copy                  # [Rows, Skp, X, Y, I, ..., Cols, Rows, Lines, Grid, LineX]
+  1 4 rroll *                # [Y*Rows, Skp, X, I, ..., Cols, Rows, Lines, Grid, LineX]
+  1 3 rroll +                # [X+(Y*Rows), Skp, I, ..., Cols, Rows, Lines, Grid, LineX]
+  + 4 +                      # [X+(Y*Rows)+Skp+3, I, ..., Cols, Rows, Lines, Grid, LineX]
+  :aoc.set                   # [ ..., Cols, Rows, Lines, Grid, LineX]
+end
+
+rt calc_rows_cols
+  # [Lines, Line1, Line2, ...]
+  0 0                        # [Cols, Rows, Lines, Line1, Line2, ...]
+  3 :aoc.copy                # [Iter, Cols, Rows, Lines, Line1, Line2, ...]
+  while
+    1 swap -                 # [Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+    dup 5 * 9 +              # [(Iter-1)*5+8, Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+    :aoc.copy_in             # [D, Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+    over 5 * 8 +             # [(Iter-1)*5+8, D, Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+    :aoc.copy_in             # [Nb, D, Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+    3 :aoc.copy_in 5 * 8 +   # [(Iter-1)*5+8, Nb, D, Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+    :aoc.copy_in             # [Na, Nb, D, Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+    1 3 rroll                # [D, Na, Nb, Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+
+    dup 85 :aoc.eq if pop
+      # Up
+      #"Up" :std.println_out
+      2 10 :ints.parse_int   # [Num, Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+      4 :aoc.move_in         # [Rows, Num, Iter-1, Cols, Lines, Line1, Line2, ...]
+      + 2 :aoc.move_out      # [Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+    else dup 82 :aoc.eq if pop
+      # Right
+      #"Right" :std.println_out
+      2 10 :ints.parse_int   # [Num, Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+      3 :aoc.move_in         # [Cols, Num, Iter-1, Rows, Lines, Line1, Line2, ...]
+      + 1 :aoc.move_out      # [Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+    else dup 68 :aoc.eq if pop
+      # Down
+      #"Down" :std.println_out
+      # In theory we would need MinRow and MaxRow, but I didn't think about that. We'll just add it to Rows, accuracy is not needed
+      2 10 :ints.parse_int   # [Num, Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+      4 :aoc.move_in         # [Rows, Num, Iter-1, Cols, Lines, Line1, Line2, ...]
+      + 2 :aoc.move_out      # [Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+    else dup 76 :aoc.eq if pop
+      # Left
+      #"Left" :std.println_out
+      # In theory we would need MinCol and MaxCol, but I didn't think about that. We'll just add it to Cols, accuracy is not needed
+      2 10 :ints.parse_int   # [Num, Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+      3 :aoc.move_in         # [Cols, Num, Iter-1, Rows, Lines, Line1, Line2, ...]
+      + 1 :aoc.move_out      # [Iter-1, Cols, Rows, Lines, Line1, Line2, ...]
+    end end end end
+
+    # DEBUG  ---
+    #1 " = Dir" :strings.concat :std.println_out
+    #2 10 :ints.parse_int :ints.int_to_str " = Num" :strings.concat :std.println_out
+    # DEBUG  ---
+  end
+  pop
+end
+
+rt create_grid
+  # [Cols, Rows]
+  over over *              # [Cols*Rows, Cols, Rows]
+  while
+    0 3 :aoc.move_out      # [Cols*Rows, Cols, Rows, 0]
+    1 swap -               # [Cols*Rows-1, Cols, Rows, 0]
+  end
+  pop                      # [Cols, Rows, ...]
+end

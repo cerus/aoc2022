@@ -13,11 +13,53 @@ rt peek_sub
   over over -  # [A-B, A, B]
 end
 
-# Copy the item at Idx to the front
 rt copy
+  .copy_in
+end
+
+# Copy the item at Idx to the front
+rt copy_in
   # [Idx, A, B, C]
   dup 1 + 1 swap rroll   # [C, Idx, A, B]
   over over swap         # [Idx, C, C, Idx, A, B]
   2 + 1 swap lroll       # [C, Idx, A, B, C]
   swap pop               # [C, A, B, C]
+end
+
+# Copy the item at the front to Idx
+rt copy_out
+  # [Idx, Item, A, B, C]
+  over swap                 # [Idx, Item, Item, A, B, C]
+  2 + 1 swap                # [Idx+2, 1, Item, Item, A, B, C]
+  lroll
+end
+
+# Move the item at the front to Pos
+rt move_out
+  # [Pos, Item]
+  1 +           # [Pos+1, Item]
+  1 swap        # [Pos+1, 1, Item]
+  lroll         # [..., Item]
+end
+
+# Move the item at the front to Pos
+rt move_in
+  # [Pos, ..., Item]
+  1 swap rroll
+end
+
+rt set
+  # [Idx, X, A, B, C]
+  # Idx = 1 -> A
+  dup 2 +             # [Idx+2, Idx, X, A, B, C]
+  1 swap rroll        # [A, Idx, X, B, C]
+  pop                 # [Idx, X, B, C]
+  1 swap lroll        # [X, B, C]
+end
+
+rt positive
+  # [Num]
+  dup 0 .gt if
+    -1 *
+  end
 end
