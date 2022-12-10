@@ -1,0 +1,184 @@
+import "stdlib/io/std"
+import "stdlib/math/ints"
+import "stdlib/strings"
+import "stdlib/stack"
+import "aoc"
+import "input/input10"
+
+# Create CRT buffer first so that it sits at the bottom of the stack
+6 while
+  40 while
+    46           # Fill with dots, they will get replaced by '#' or ' ' when the program runs
+    1 3 lroll
+    1 swap -
+  end pop
+  1 swap -
+end pop
+
+# Parse the input and run the program
+:input10.input
+.parse_all_instrs
+.start_cycling
+
+# Display CRT buffer
+7 :stack.multi_pop
+.print_dashes
+6 while
+  # [Row, Buffer]
+  1 41 lroll
+  40 "|" :strings.concat :strings.reverse "|" :strings.concat :std.println_out
+  1 swap -
+end
+.print_dashes
+
+rt start_cycling
+  # [Instrs, Instr, Instr, Instr, ...]
+  1 0 0 0 0 1
+  # [Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, Instr, ...]
+  while
+    .cycle
+  end
+end
+
+rt cycle
+  # [Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, Instr, ...]
+  ssize 40 6 * swap - 7 :aoc.eq 4:aoc.copy 0 :aoc.eq & if
+    # No instrs left and Skp is zero
+    pop 0
+
+    # Add Tad to X
+    2 6 rroll                # [Tad, X, Run, Cyc, Skp-1, Sst, Instrs, Instr, Instr, Instr, ...]
+    + 0                      # [0->Tad, Tad+X->X, Run, Cyc, Skp-1, Sst, Instrs, Instr, Instr, Instr, ...]
+    2 6 lroll                # [Run, Cyc, Skp-1, Sst, Tad, X, Instrs, Instr, Instr, Instr, ...]
+  else
+    # Cycle
+    swap 1 + swap              # [Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, Instr, ...]
+
+    3 :aoc.copy if
+      # Skp > 0
+      1 3 rroll                # [Skp, Run, Cyc, Sst, Tad, X, Instrs, Instr, Instr, Instr, ...]
+      1 swap -                 # [Skp-1, Run, Cyc, Sst, Tad, X, Instrs, Instr, Instr, Instr, ...]
+      1 3 lroll                # [Run, Cyc, Skp-1, Sst, Tad, X, Instrs, Instr, Instr, Instr, ...]
+    else
+      # Skp == 0
+      # Add Tad to X
+      2 6 rroll                # [Tad, X, Run, Cyc, Skp-1, Sst, Instrs, Instr, Instr, Instr, ...]
+      + 0                      # [0->Tad, Tad+X->X, Run, Cyc, Skp-1, Sst, Instrs, Instr, Instr, Instr, ...]
+      2 6 lroll                # [Run, Cyc, Skp-1, Sst, Tad, X, Instrs, Instr, Instr, Instr, ...]
+
+      # Execute next instruction
+      1 8 rroll                # [Ins.., Run, Cyc, Skp, Sst, Tad, X, Instrs, ..tr, Instr, Instr, ...]
+
+      dup 0 :aoc.eq if
+        # noop
+        # [Ins.., Run, Cyc, Skp, Sst, Tad, X, Instrs, ..tr, Instr, Instr, ...]
+        pop 1 8 rroll pop      # [Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, ...]
+      else dup 1 :aoc.eq if
+        # addx
+        # [Ins.., Run, Cyc, Skp, Sst, Tad, X, Instrs, ..tr, Instr, Instr, ...]
+        pop 1 8 rroll          # [..tr, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, ...]
+        1 6 rroll +            # [Tad, Run, Cyc, Skp, Sst, X, Instrs, Instr, Instr, ...]
+        1 5 lroll              # [Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, ...]
+        1 3 rroll 1 +          # [Skp+1, Run, Cyc, Sst, Tad, X, Instrs, Instr, Instr, ...]
+        1 3 lroll              # [Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, ...]
+      end end
+    end
+
+    # Draw pixel
+    over 1 swap - 6 40 * swap % # [Pos, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, ...]
+    7 :aoc.copy swap           # [Pos, X, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, ...]
+    dup 1 3 lroll              # [Pos, X, Pos, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, ...]
+    40 swap %                  # [Pos%40, X, Pos, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, ...]
+    - :aoc.positive dup        # [(Pos%40)-X, (Pos%40)-X, Pos, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, ...]
+    0 :aoc.eq                  # [Pos-X == 0, Pos-X, Pos, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, ...]
+    swap 1 :aoc.eq             # [Pos-X == 1, Pos-X == 0, Pos, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, ...]
+    | if
+      # Draw lit pixel
+      # [Pos, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, ...]
+      35 swap .set_pixel
+    else
+      # Draw dark pixel
+      # [Pos, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, ...]
+      32 swap .set_pixel
+    end
+
+    # Check if we need to update the signal strength
+    over 20 + 40 swap % 0 :aoc.eq   # [Cyc+20 % 40 == 0, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, Instr, ...]
+    3 :aoc.copy 220 :aoc.gte        # [220>=Cyc, Cyc+20 % 40 == 0, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, Instr, ...]
+    & if
+      # Update signal strength
+      over                       # [Cyc, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, Instr, ...]
+      7 :aoc.copy *              # [X*Cyc, Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, Instr, ...]
+      1 5 rroll +                # [Sst+(X*Cyc), Run, Cyc, Skp, Tad, X, Instrs, Instr, Instr, Instr, ...]
+      1 4 lroll                  # [Run, Cyc, Skp, Sst, Tad, X, Instrs, Instr, Instr, Instr, ...]
+    end
+  end
+end
+
+# Parse all lines into instructions
+rt parse_all_instrs
+  # [Len1, Str1, Len2, Str2, ..., Buffer]
+  ssize 40 6 * swap -             # [Total, Len1, Str1, Len2, Str2, ...]
+  while
+    # [Total, Len1, Str1, Len2, Str2, ...]
+    over dup 3 +             # [Len1+3, Len1, Total, Len1, Str1, Len2, Str2, ...]
+    2 swap lroll             # [Len1, Str1, Len1, Total, Len2, Str2, ...]
+    .parse_instr             # [Instr, Len1, Total, Len2, Str2, ...]
+    2 4 lroll                # [Len1, Total, Instr, Len2, Str2, ...]
+    1 + swap -               # [Total-(Len1+1), Instr, Len2, Str2, ...]
+    1 3 lroll                # [Instr, Total-(Len1+1), Len2, Str2, ...]
+    3 :aoc.copy 3 +          # [Total+3, Instr, Total-(Len1+1), Len2, Str2, ...]
+    2 swap lroll             # [Total-(Len1+1), Len2, Str2, ..., Instr]
+  end
+  pop
+  ssize 40 6 * swap - 2 swap /    # [Instrs, Instr, Instr, ...]
+end
+
+# Parse a string into a two-element-long instruction
+rt parse_instr
+  # [Len, Str]
+  dup 1 + :aoc.copy        # [C, Len, Str]
+  dup "n" pop :aoc.eq if
+    #[C, Len, "noop"]
+    pop :stack.multi_pop   # []
+    0 0                    # [Instr]
+  else dup "a" pop :aoc.eq if
+    #[C, Len, "addx ?"]
+    # Remember: LIFO - Strings are reversed
+    pop                    # [Len, "? xdda"]
+    :strings.reverse       # [Len, "addx ?"]
+    5 swap -               # [Len-5, "addx ?"]
+    swap pop               # [Len-5, "ddx ?"]
+    swap pop               # [Len-5, "dx ?"]
+    swap pop               # [Len-5, "x ?"]
+    swap pop               # [Len-5, " ?"]
+    swap pop               # [Len-5, "?"]
+    :strings.reverse       # [Len-5, "?"]
+    10 :ints.parse_int 1   # [Instr]
+  end end
+end
+
+# Get a pixel from the CRT buffer
+rt get_pixel
+  # [Pos]
+  ssize 40 6 * swap - +    # [Idx+Pos]
+  :aoc.copy
+end
+
+# Set a pixel in the CRT buffer
+rt set_pixel
+  # [Pos, X]
+  ssize 40 6 * swap -      # [Idx, Pos]
+  1 swap - +               # [(Idx-1)+Pos]
+  :aoc.set
+end
+
+# Print a line of 40 dashes ('-') with a leading space to the terminal
+rt print_dashes
+  " " pop
+  40 while
+    "-" pop swap
+    1 swap -
+  end pop
+  41 :std.println_out
+end
