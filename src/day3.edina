@@ -1,0 +1,194 @@
+import "stdlib/io/std"
+import "stdlib/math/ints"
+import "stdlib/strings"
+import "stdlib/stack"
+import "aoc"
+import "input/input3"
+
+.part_one
+:ints.int_to_str " is the part one solution" :strings.concat :std.println_out
+.part_two
+:ints.int_to_str " is the part two solution" :strings.concat :std.println_out
+
+# Split line in half and find a char that is present in both,
+# then calculate the char priority and add it to the result
+rt part_one
+  :input3.input              # [Strs, Len1, Str1, ...]
+  0                          # [Res, Strs, Len1, Str1, ...]
+  over while
+    # [Iter, Res, Strs, Len1, Str1, ...]
+    1 swap -                 # [Iter-1, Res, Strs, Len1, Str1, ...]
+    4 :aoc.copy              # [Len1, Iter-1, Res, Strs, Len1, Str1, ...]
+    4 +                      # [Len1+4, Iter-1, Res, Strs, Len1, Str1, ...]
+    3 swap lroll             # [Len1, Str1, Iter-1, Res, Strs, ...]
+    .split_string_in_half    # [Len1/2, Str1a, Len1/2, Str1b, Iter-1, Res, Strs, ...]
+    2 .find_char_duplicate   # [Res, 2, Len1/2, Str1a, Len1/2, Str1b, Iter-1, Res, Strs, ...]
+    3 :aoc.copy 2 *          # [Len1, Res, 2, Len1/2, Str1a, Len1/2, Str1b, Iter-1, Res, Strs, ...]
+    4 +                      # [Len1+4, Res, 2, Len1/2, Str1a, Len1/2, Str1b, Iter-1, Res, Strs, ...]
+    1 swap lroll             # [2, Len1/2, Str1a, Len1/2, Str1b, Res, Iter-1, Res, Strs, ...]
+    pop                      # [Len1/2, Str1a, Len1/2, Str1b, Res, Iter-1, Res, Strs, ...]
+    :stack.multi_pop         # [Len1/2, Str1b, Res, Iter-1, Res, Strs, ...]
+    :stack.multi_pop         # [Res, Iter-1, Res, Strs, ...]
+    .priority                # [Res, Iter-1, Res, Strs, ...]
+    1 3 rroll +              # [Res+Res, Iter-1, Strs, ...]
+    swap                     # [Iter-1, Res, Strs, ...]
+  end
+  pop swap pop
+end
+
+# Find a char that is present in the next three lines,
+# then calculate the char priority and add it to the result
+rt part_two
+  :input3.input              # [Strs, Len1, Str1, ...]
+  0                          # [Res, Strs, Len1, Str1, ...]
+  over                       # [Iter, Res, Strs, Len1, Str1, ...]
+  3 swap /                   # [Iter, Res, Strs, Len1, Str1, ...]
+  while
+    # [Iter, Res, Strs, Len1, Str1, ...]
+    1 swap -                 # [Iter-1, Res, Strs, Len1, Str1, Len2, Str2, Len3, Str3, ...]
+    4 :aoc.copy              # [Len1, Iter-1, Res, Strs, Len1, Str1, Len2, Str2, Len3, Str3, ...]
+    dup 6 + :aoc.copy        # [Len2, Len1, Iter-1, Res, Strs, Len1, Str1, Len2, Str2, Len3, Str3, ...]
+    over over +              # [Len2+Len1, Len2, Len1, Iter-1, Res, Strs, Len1, Str1, Len2, Str2, Len3, Str3, ...]
+    8 + :aoc.copy            # [Len3, Len2, Len1, Iter-1, Res, Strs, Len1, Str1, Len2, Str2, Len3, Str3, ...]
+    + +                      # [Len3+Len2+Len1->TLen, Iter-1, Res, Strs, Len1, Str1, Len2, Str2, Len3, Str3, ...]
+    dup 7 +                  # [TLen+7, TLen, Iter-1, Res, Strs, Len1, Str1, Len2, Str2, Len3, Str3, ...]
+    4 swap lroll             # [Len1, Str1, Len2, Str2, Len3, Str3, TLen, Iter-1, Res, Strs, ...]
+    3 .find_char_duplicate   # [C, 3, Len1, Str1, Len2, Str2, Len3, Str3, TLen, Iter-1, Res, Strs, ...]
+    3 :aoc.copy 3 +          # [Len1+3, C, 3, Len1, Str1, Len2, Str2, Len3, Str3, TLen, Iter-1, Res, Strs, ...]
+    1 swap lroll             # [3, Len1, Str1, C, Len2, Str2, Len3, Str3, TLen, Iter-1, Res, Strs, ...]
+    pop :stack.multi_pop     # [C, Len2, Str2, Len3, Str3, TLen, Iter-1, Res, Strs, ...]
+    over 2 + 1 swap lroll    # [Len2, Str2, C, Len3, Str3, TLen, Iter-1, Res, Strs, ...]
+    :stack.multi_pop         # [C, Len3, Str3, TLen, Iter-1, Res, Strs, ...]
+    over 2 + 1 swap lroll    # [Len3, Str3, C, TLen, Iter-1, Res, Strs, ...]
+    :stack.multi_pop         # [C, TLen, Iter-1, Res, Strs, ...]
+    swap pop                 # [C, Iter-1, Res, Strs, ...]
+    .priority                # [Res, Iter-1, Res, Strs, ...]
+    1 3 rroll +              # [Res+Res, Iter-1, Strs, ...]
+    swap                     # [Iter-1, Res, Strs, ...]
+  end
+  pop swap pop
+end
+
+# Find a char that is present in the following X strings
+rt find_char_duplicate
+  # [Strs, Len1, Str1, Len2, Str2, ...]
+  over                    # [Len1, Strs, Len1, Str1, Len2, Str2, ...]
+  -1 swap                 # [Len1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+  while
+    # [Len1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+    1 swap -              # [Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+    dup 5 +               # [(Len1-1)+5, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+    :aoc.copy             # [C, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+    0 swap                # [C, Cnt, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+    5 :aoc.copy           # [Iter, C, Cnt, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+    0 1 4 lroll           # [Iter, C, Cnt, Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+
+    while
+      # [Iter, C, Cnt, Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      4 :aoc.copy 7 +     # [Skp+7, Iter, C, Cnt, Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      3 :aoc.copy         # [C, Skp+7, Iter, C, Cnt, Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      .contains           # [Cnt, C, Iter, C, Cnt, Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      swap pop            # [Cnt, Iter, C, Cnt, Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      1 4 rroll +         # [Cnt+Cnt, Iter, C, Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      1 4 rroll           # [Skp, Cnt+Cnt, Iter, C, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      dup 8 + :aoc.copy   # [Len, Skp, Cnt+Cnt, Iter, C, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      + 1 +               # [Len+1+Skp, Cnt+Cnt, Iter, C, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      swap                # [Cnt+Cnt, Len+1+Skp, Iter, C, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      2 4 lroll           # [Iter, C, Cnt+Cnt, Len+1+Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      1 swap -            # [Iter-1, C, Cnt+Cnt, Len+1+Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+    end
+    pop
+
+    # [C, Cnt, Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+    swap                  # [Cnt, C, Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+    6 :aoc.copy           # [Strs, Cnt, C, Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+    :aoc.eq if
+      # [C, Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      # We found our duplicate
+      # We need:  [Len1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      1 4 rroll           # [Res, C, Skp, Len1-1, Strs, Len1, Str1, Len2, Str2, ...]
+      pop                 # [Res<-C, Skp, Len1-1, Strs, Len1, Str1, Len2, Str2, ...]
+      swap pop            # [Res<-C, Len1-1, Strs, Len1, Str1, Len2, Str2, ...]
+      swap                # [Len1-1, Res<-C, Strs, Len1, Str1, Len2, Str2, ...]
+      pop 0               # [Len1-1, Res<-C, Strs, Len1, Str1, Len2, Str2, ...]
+    else
+      # [C, Skp, Len1-1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      # Duplicate not found
+      # We need:  [Len1, Res, Strs, Len1, Str1, Len2, Str2, ...]
+      pop pop
+    end
+  end
+  pop
+  # [Res, Strs, Len1, Str1, Len2, Str2, ...]
+end
+
+# Split a string in half
+rt split_string_in_half
+  # [Len, Str]
+  dup 2 swap %            # [Len%2, Len, Str]
+  if
+    # Len is not even
+    "Can not split string with odd length" :std.println_out
+  else
+    # Len is even
+    dup 2 swap / 2 +      # [(Len/2)+1, Len, Str]
+    dup 2 swap - swap     # [(Len/2)+1, Len/2, Len, Str]
+    1 swap lroll          # [Len, Str, Len/2, Str]
+    2 swap /              # [Len/2, Str, Len/2, Str]
+  end
+end
+
+# Check if a string contains a char
+# This routine allows you to specify how many stack elements
+# need to be skipped before the actual string is reached.
+rt contains
+  # [C, Skp, ..., Len, Str]   ->   [Cnt, C, ..., Len, Str]
+  over 3 +               # [Skp+2, C, Skp, ..., Len, Str]
+  :aoc.copy              # [Len, C, Skp, ..., Len, Str]
+  3 :aoc.copy +          # [Skp+Len, C, Skp, ..., Len, Str]
+  3 +                    # [Skp+Len+3, C, Skp, ..., Len, Str]
+  3 :aoc.copy            # [Skp, Skp+Len+3, C, Skp, ..., Len, Str]
+  2 + swap               # [Skp+Len+3, Skp+2, C, Skp, ..., Len, Str]
+  lroll                  # [Len, Str, C, Skp, ...]
+  dup 2 + :aoc.copy      # [C, Len, Str, C, Skp, ...]
+  :strings.contains      # [Cnt, Len, Str, C, Skp, ...]
+  if 1 else 0 end
+  over 4 +               # [Len+4, Cnt, Len, Str, C, Skp, ...]
+  :aoc.copy dup          # [Skp, Skp, Cnt, Len, Str, C, Skp, ...]
+  4 :aoc.copy + 4 +      # [Skp+Len+4, Skp, Cnt, Len, Str, C, Skp, ...]
+  swap 2 + swap          # [Skp+Len+4, Skp+2, Cnt, Len, Str, C, Skp, ...]
+  rroll                  # [C, Skp, ..., Cnt, Len, Str]
+  swap 2 +               # [Skp+2, C, ..., Cnt, Len, Str]
+  1 swap rroll           # [Cnt, C, ..., Len, Str]
+end
+
+# Assign a priority to a char
+# a - z -> 1 - 26
+# A - Z -> 27 - 52
+rt priority
+  # [C]
+  dup "a" pop            # [a, C, C]
+  :aoc.lte               # [a<=C, C]
+  over "z" pop           # [z, C, a<=C, C]
+  :aoc.gte               # [z>=C, a<=C, C]
+  &                      # [z>=C & a<=C, C]
+  if
+    # Char is lowercase
+    # [C]
+    96 swap -            # [C-96]
+  else
+    # [C]
+    dup "A" pop            # [A, C, C]
+    :aoc.lte               # [A<=C, C]
+    over "Z" pop           # [Z, C, A<=C, C]
+    :aoc.gte               # [Z>=C, A<=C, C]
+    &                      # [Z>=C & A<=C, C]
+    if
+      # Char is uppercase
+      # [C]
+      38 swap -            # [C-38]
+    else
+      pop 0
+    end
+  end
+end
