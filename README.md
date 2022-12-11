@@ -13,7 +13,7 @@ My Advent of Code 2022 solutions written in [Edina](https://github.com/cerus/edi
 | 04  | ❌      | ❌      |       |
 | 05  | ❌      | ❌      |       |
 | 06  | ✔️     | ✔️     | Edina |
-| 07  | ❌      | ❌      |       |
+| 07  | ✔️     | ✔️     | Java  |
 | 08  | ✔️     | ✔️     | Edina |
 | 09  | ✔️     | ❌      | Edina |
 | 10  | ✔️     | ✔️     | Edina |
