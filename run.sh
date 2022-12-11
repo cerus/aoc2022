@@ -20,9 +20,15 @@ if [ "$1" = '' ] ; then
   echo "Please enter the day you want to run"
   exit
 fi
-if [ ! -f "src/day$1.edina" ]; then
-  echo "src/day$1.edina does not exist"
+if [ -f "src/main/edina/day$1.edina" ]; then
+  java -jar edinaj.jar -P dev.cerus.aoc2022 -F "src/main/edina/day$1.edina" -I src/main/edina -O aoc.jar -Q -R
+elif [ -f "src/main/java/aoc/day$1/Day$1.java" ]; then
+  mkdir temp
+  javac -d temp/ -cp src/main/java/ src/main/java/aoc/*.java
+  javac -d temp/ -cp src/main/java/ src/main/java/aoc/day$1/*.java
+  java -cp temp "aoc/day$1/Day$1"
+  rm -r temp
+else
+  echo "No source file for day $1 found"
   exit
 fi
-
-java -jar edinaj.jar -P dev.cerus.aoc2022 -F "src/day$1.edina" -I src -O aoc.jar -Q -R
