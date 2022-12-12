@@ -7,8 +7,29 @@ import java.util.List;
 
 public class Pathfinder {
 
+    private static final List<List<Vec2>> generatedPaths = new ArrayList<>();
+
     public static List<Vec2> findPath(final Grid grid, final Vec2 start, final Vec2 end) {
-        return djikstra(start, end, grid);
+        return generatedPaths.stream()
+                .filter(p -> p.contains(start))
+                .filter(p -> p.contains(end))
+                .map(p -> {
+                    final List<Vec2> path = new ArrayList<>(p);
+                    while (!path.get(0).equals(start) && !path.get(0).equals(end)) {
+                        path.remove(0);
+                    }
+                    while (!path.get(path.size() - 1).equals(start) && !path.get(path.size() - 1).equals(end)) {
+                        path.remove(path.size() - 1);
+                    }
+                    return path;
+                })
+                .sorted(Comparator.comparingInt(List::size))
+                .findAny()
+                .orElseGet(() -> {
+                    final List<Vec2> path = djikstra(start, end, grid);
+                    generatedPaths.add(path);
+                    return path;
+                });
     }
 
     private static List<Vec2> djikstra(final Vec2 from, final Vec2 to, final Grid grid) {
@@ -40,6 +61,7 @@ public class Pathfinder {
                     });
             settled.add(node);
         }
+
         return walk(settled.stream()
                 .filter(node -> node.getPos().equals(to))
                 .findAny()
@@ -54,28 +76,6 @@ public class Pathfinder {
             current = current.getParent();
         }
         return path;
-    }
-
-    private static Result traverse(final List<List<Vec2>> paths, final List<Vec2> currentPath, final Vec2 from, final Vec2 to, final Vec2 stop, final Grid grid) {
-        if (!canMove(grid, from, to) || currentPath.contains(to)) {
-            return Result.STUCK;
-        }
-        currentPath.add(to);
-        if (to.equals(stop)) {
-            return Result.DONE;
-        }
-
-        paths.remove(currentPath);
-        for (int i = 0; i < 4; i++) {
-            final Vec2 next = to.add(i == 1 ? 1 : i == 3 ? -1 : 0, i == 0 ? 1 : i == 2 ? -1 : 0);
-            if (next.isPositive()) {
-                final List<Vec2> nextPath = new ArrayList<>();
-                if (traverse(paths, nextPath, to, next, stop, grid) == Result.STUCK) {
-                    paths.remove(nextPath);
-                }
-            }
-        }
-        return Result.IN_PROGRESS;
     }
 
     private static boolean canMove(final Grid g, final Vec2 a, final Vec2 b) {
@@ -97,10 +97,6 @@ public class Pathfinder {
 
     private static double dist(final Vec2 a, final Vec2 b) {
         return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
-    }
-
-    private enum Result {
-        DONE, STUCK, IN_PROGRESS
     }
 
 }

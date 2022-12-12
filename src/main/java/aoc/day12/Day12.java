@@ -59,7 +59,7 @@ public class Day12 {
                         if (i == 0) {
                             n++;
                         } else {
-                            System.out.println((++k) + " / " + n);
+                            System.out.println("Checking path " + (++k) + " out of " + n + " possible paths...");
                             final List<Vec2> path = Pathfinder.findPath(grid, new Vec2(x, y), end);
                             final int pathSteps = calcSteps(path);
                             if (!path.isEmpty() && pathSteps > 0 && (pathTwo.isEmpty() || pathTwoSteps > pathSteps)) {
@@ -73,8 +73,8 @@ public class Day12 {
             }
         }
 
-        System.out.println(calcSteps(pathOne) + " / " + pathOne.size());
-        System.out.println(calcSteps(pathTwo) + " / " + pathTwo.size());
+        System.out.println("Part one: " + calcSteps(pathOne) + " / " + pathOne.size());
+        System.out.println("Part two: " + calcSteps(pathTwo) + " / " + pathTwo.size());
     }
 
     private static int calcSteps(final List<Vec2> ogList) {
