@@ -10,8 +10,8 @@ My Advent of Code 2022 solutions written in [Edina](https://github.com/cerus/edi
 | 01  | ✔️     | ✔️     | Edina |
 | 02  | ✔️     | ✔️     | Edina |
 | 03  | ✔️     | ✔️     | Edina |
-| 04  | ❌      | ❌      |       |
-| 05  | ❌      | ❌      |       |
+| 04  | ✔️     | ✔️     | Java  |
+| 05  | ✔️     | ✔️     | Java  |
 | 06  | ✔️     | ✔️     | Edina |
 | 07  | ✔️     | ✔️     | Java  |
 | 08  | ✔️     | ✔️     | Edina |
@@ -19,8 +19,8 @@ My Advent of Code 2022 solutions written in [Edina](https://github.com/cerus/edi
 | 10  | ✔️     | ✔️     | Edina |
 | 11  | ✔️     | ✔️     | Java  |
 | 12  | ✔️     | ✔️     | Java  |
-| 13  | ❌      | ❌      |       |
-| 14  | ❌      | ❌      |       |
+| 13  | ✔️     | ✔️     | Java  |
+| 14  | ✔️     | ✔️     | Java  |
 | 15  | ❌      | ❌      |       |
 | 16  | ❌      | ❌      |       |
 | 17  | ❌      | ❌      |       |
