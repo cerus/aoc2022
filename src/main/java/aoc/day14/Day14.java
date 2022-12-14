@@ -8,13 +8,15 @@ public class Day14 {
 
     public static void main(final String[] args) {
         final List<Vec2[]> paths = Arrays.stream(Aoc.readInput(14).split("\n"))
-                .map(s -> Arrays.stream(s.split(" -> "))
-                        .map(s1 -> {
-                            final String[] split = s1.split(",");
+                .map(line -> Arrays.stream(line.split(" -> "))
+                        .map(coord -> {
+                            final String[] split = coord.split(",");
                             return new Vec2(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
                         })
                         .toArray(Vec2[]::new))
                 .toList();
+
+        // Calculate bounds
         int minX = Integer.MAX_VALUE;
         int maxY = 0;
         int width = 0;
@@ -39,29 +41,24 @@ public class Day14 {
         width += 1;
         height += 3;
 
+        // Part one
         Grid grid = createGrid(width, height, minX, paths);
         runSimulation(grid, minX);
         grid.print();
+        countSand(grid);
 
-        int sand = 0;
-        for (int x = 0; x < grid.width(); x++) {
-            for (int y = 0; y < grid.height(); y++) {
-                if (grid.get(x, y) == Grid.SAND) {
-                    sand++;
-                    grid.set(x, y, Grid.AIR);
-                }
-            }
-        }
-        System.out.println("There are " + sand + " sand  tiles.");
-
+        // Part two
         grid = createGrid((width + minX) * 2, height, minX = 0, paths);
         for (int x = 0; x < grid.width(); x++) {
             grid.set(x, maxY + 2, Grid.ROCK);
         }
         runSimulation(grid, minX);
         grid.print();
+        countSand(grid);
+    }
 
-        sand = 0;
+    private static void countSand(final Grid grid) {
+        int sand = 0;
         for (int x = 0; x < grid.width(); x++) {
             for (int y = 0; y < grid.height(); y++) {
                 if (grid.get(x, y) == Grid.SAND) {
@@ -112,7 +109,7 @@ public class Day14 {
                         break;
                     }
                 } catch (final ArrayIndexOutOfBoundsException ignored) {
-                    System.out.println("PANIC AT " + x + "," + y);
+                    // Ugly, but it works.
                     break main;
                 }
             }
@@ -134,19 +131,7 @@ public class Day14 {
             drawLineHorizontal(grid, p1, p2, state);
             return;
         }
-
-        final int dx = p2.x - p1.x;
-        final int dy = p2.y - p1.y;
-        int D = 2 * dy - dx;
-        int y = p1.y;
-        for (int x = p1.x; x <= p2.x; x++) {
-            grid.set(x, y, state);
-            if (D > 0) {
-                y += 1;
-                D -= 2 * dx;
-            }
-            D += 2 * dy;
-        }
+        throw new IllegalStateException();
     }
 
     private static void drawLineVertical(final Grid grid, final Vec2 p1, final Vec2 p2, final int state) {
