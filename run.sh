@@ -21,7 +21,7 @@ if [ "$1" = '' ] ; then
   exit
 fi
 if [ -f "src/main/edina/day$1.edina" ]; then
-  java -jar edinaj.jar -P dev.cerus.aoc2022 -F "src/main/edina/day$1.edina" -I src/main/edina -O aoc.jar -Q -R
+  java -Xmx2G -jar edinaj.jar -P dev.cerus.aoc2022 -F "src/main/edina/day$1.edina" -I src/main/edina -O aoc.jar -Q -R
 elif [ -f "src/main/java/aoc/day$1/Day$1.java" ]; then
   mkdir temp
   javac -d temp/ -cp src/main/java/ src/main/java/aoc/*.java
